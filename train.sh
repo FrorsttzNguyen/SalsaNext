@@ -43,3 +43,6 @@ else
 fi
 export CUDA_VISIBLE_DEVICES="$c"
 cd ./train/tasks/semantic;  ./train.py -d "$d"  -ac "$a" -l "$l" -n "$n" -p "$p" -u "$u"
+
+
+
