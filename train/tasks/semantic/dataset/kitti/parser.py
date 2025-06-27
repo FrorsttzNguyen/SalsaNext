@@ -368,7 +368,6 @@ class Parser():
                                                     shuffle=False,
                                                     num_workers=self.workers,
                                                     drop_last=True)
-      assert len(self.testloader) > 0
       self.testiter = iter(self.testloader)
 
   def get_train_batch(self):

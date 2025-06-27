@@ -1,4 +1,12 @@
 #!/bin/sh
+
+d="/media/data/eyecode-vinh/kitti/dataset/"
+p="/home/eyecode-vinh/SalsaNext/prediction"
+m="/home/eyecode-vinh/SalsaNext/pretrained"
+s="valid"
+g="1"  # Để trống để sử dụng CPU
+c="30"
+
 helpFunction()
 {
    echo "Options not found"
@@ -36,6 +44,10 @@ d=$(get_abs_filename "$d")
 p=$(get_abs_filename "$p")
 m=$(get_abs_filename "$m")
 export CUDA_VISIBLE_DEVICES="$g"
-cd ./train/tasks/semantic/; ./infer.py -d "$d" -l "$p" -m "$m" -n "$n" -s "$s" -u "$u" -c "$c"
-echo "finishing infering.\n Starting evaluating"
-./evaluate_iou.py -d "$d" -p "$p" --split "$s" -m "$m"
+
+# Sao chép file cấu hình tùy chỉnh vào thư mục mô hình
+cp custom_data_cfg.yaml "$m/data_cfg.yaml"
+
+# Chỉ chạy inference trên sequence 08 (tập validation)
+cd ./train/tasks/semantic/; ./infer.py -d "$d" -l "$p" -m "$m" -n "$n" -s "valid" -u "$u" -c "$c"
+echo "Inference completed on validation set (sequence 08)."

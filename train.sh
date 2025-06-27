@@ -46,3 +46,14 @@ cd ./train/tasks/semantic;  ./train.py -d "$d"  -ac "$a" -l "$l" -n "$n" -p "$p"
 
 
 
+#https://drive.google.com/file/d/1j7iUSEWweLd-ks9jIck4RXpBoG9wOXMH/view?usp=sharing --00.zip
+#https://drive.google.com/file/d/11EjgJBeTn24s6PQ_S6912ZZrr7iU4-Ic/view?usp=sharing --01.zip
+#https://drive.google.com/file/d/1Nx1B3WivmZZXDOUp_OjZGrOr-aJ8AKAp/view?usp=sharing --02.zip
+#https://drive.google.com/file/d/1WMm4mxeREazUwsMa6JwryJ0inOQDHd3N/view?usp=sharing --03.zip
+#https://drive.google.com/file/d/1rysCfB0OtjvJRbaal70qOZMXOiQko4y1/view?usp=sharing --04.zip
+#https://drive.google.com/file/d/1WMS1meTPRv3PYXNzEwehJVWKONxCKWVB/view?usp=sharing --05.zip
+#https://drive.google.com/file/d/1Y8eW-CByC382wuB2VIQktz2LIC1CZlr3/view?usp=sharing --label
+#https://drive.google.com/file/d/1SsqrIJmU4OfSr0OQjqRuXomE__vlErG9/view?usp=sharing --08.zip
+
+#/media/data/eyecode-vinh/kitti/dataset/
+
