@@ -50,4 +50,4 @@ cp custom_data_cfg.yaml "$m/data_cfg.yaml"
 
 # Chỉ chạy inference trên sequence 08 (tập validation)
 cd ./train/tasks/semantic/; ./infer.py -d "$d" -l "$p" -m "$m" -n "$n" -s "valid" -u "$u" -c "$c"
-echo "Inference completed on validation set (sequence 08)."
+echo "Inference completed on validation set."
