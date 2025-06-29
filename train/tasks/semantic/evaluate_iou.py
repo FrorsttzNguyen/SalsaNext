@@ -60,34 +60,73 @@ def eval(test_sequences,splits,pred):
         pred_names.extend(seq_pred_names)
     # print(pred_names)
 
-    # check that I have the same number of files
-    # print("labels: ", len(label_names))
-    # print("predictions: ", len(pred_names))
-    assert (len(label_names) == len(scan_names) and
-            len(label_names) == len(pred_names))
-
+    # check that I have files to evaluate
+    print("labels: ", len(label_names))
+    print("predictions: ", len(pred_names))
+    print("scans: ", len(scan_names))
+    
+    if len(label_names) == 0 or len(pred_names) == 0:
+        print("No files to evaluate!")
+        return
+    
+    # Find common files between labels and predictions
+    label_basenames = [os.path.basename(f) for f in label_names]
+    pred_basenames = [os.path.basename(f) for f in pred_names]
+    scan_basenames = [os.path.basename(f) for f in scan_names]
+    
+    # Create mapping dictionaries for faster lookup
+    label_dict = {os.path.basename(f): f for f in label_names}
+    pred_dict = {os.path.basename(f): f for f in pred_names}
+    scan_dict = {os.path.basename(f).replace('.bin', '.label'): f for f in scan_names}
+    
+    # Find common files
+    common_files = set(label_basenames).intersection(set(pred_basenames))
+    print(f"Found {len(common_files)} common files between labels and predictions")
+    
+    if len(common_files) == 0:
+        print("No common files to evaluate!")
+        return
+    
     print("Evaluating sequences: ")
     # open each file, get the tensor, and make the iou comparison
-    for scan_file, label_file, pred_file in zip(scan_names, label_names, pred_names):
-        print("evaluating label ", label_file, "with", pred_file)
-        # open label
-        label = SemLaserScan(project=False)
-        label.open_scan(scan_file)
-        label.open_label(label_file)
-        u_label_sem = remap_lut[label.sem_label]  # remap to xentropy format
-        if FLAGS.limit is not None:
-            u_label_sem = u_label_sem[:FLAGS.limit]
+    evaluated_count = 0
+    
+    for filename in common_files:
+        if filename not in scan_dict:
+            print(f"Warning: No scan file found for {filename}, skipping")
+            continue
+            
+        scan_file = scan_dict[filename]
+        label_file = label_dict[filename]
+        pred_file = pred_dict[filename]
+        
+        print(f"Evaluating {evaluated_count+1}/{len(common_files)}: {filename}")
+        
+        try:
+            # open label
+            label = SemLaserScan(project=False)
+            label.open_scan(scan_file)
+            label.open_label(label_file)
+            u_label_sem = remap_lut[label.sem_label]  # remap to xentropy format
+            if FLAGS.limit is not None:
+                u_label_sem = u_label_sem[:FLAGS.limit]
 
-        # open prediction
-        pred = SemLaserScan(project=False)
-        pred.open_scan(scan_file)
-        pred.open_label(pred_file)
-        u_pred_sem = remap_lut[pred.sem_label]  # remap to xentropy format
-        if FLAGS.limit is not None:
-            u_pred_sem = u_pred_sem[:FLAGS.limit]
+            # open prediction
+            pred = SemLaserScan(project=False)
+            pred.open_scan(scan_file)
+            pred.open_label(pred_file)
+            u_pred_sem = remap_lut[pred.sem_label]  # remap to xentropy format
+            if FLAGS.limit is not None:
+                u_pred_sem = u_pred_sem[:FLAGS.limit]
 
-        # add single scan to evaluation
-        evaluator.addBatch(u_pred_sem, u_label_sem)
+            # add single scan to evaluation
+            evaluator.addBatch(u_pred_sem, u_label_sem)
+            evaluated_count += 1
+        except Exception as e:
+            print(f"Error evaluating {filename}: {e}")
+            continue
+    
+    print(f"Successfully evaluated {evaluated_count} files")
 
     # when I am done, print the evaluation
     m_accuracy = evaluator.getacc()

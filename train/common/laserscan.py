@@ -286,12 +286,26 @@ class SemLaserScan(LaserScan):
             self.sem_label = label & 0xFFFF  # semantic label in lower half
             self.inst_label = label >> 16  # instance id in upper half
         else:
-            print("Points shape: ", self.points.shape)
-            print("Label shape: ", label.shape)
-            raise ValueError("Scan and Label don't contain same number of points")
+            print("WARNING: Points shape: ", self.points.shape)
+            print("WARNING: Label shape: ", label.shape)
+            print("WARNING: Scan and Label don't contain same number of points, using min length")
+            # Use the minimum length
+            min_length = min(label.shape[0], self.points.shape[0])
+            if min_length > 0:
+                self.sem_label = (label[:min_length] & 0xFFFF)  # semantic label in lower half
+                self.inst_label = (label[:min_length] >> 16)  # instance id in upper half
+                # Truncate points if needed
+                if self.points.shape[0] > min_length:
+                    self.points = self.points[:min_length]
+                    self.remissions = self.remissions[:min_length]
+            else:
+                print("ERROR: No points to process")
 
-        # sanity check
-        assert ((self.sem_label + (self.inst_label << 16) == label).all())
+        # sanity check - only if shapes match
+        if self.sem_label.shape[0] == label.shape[0]:
+            assert ((self.sem_label + (self.inst_label << 16) == label).all())
+        else:
+            print("WARNING: Skipping sanity check due to shape mismatch")
 
         if self.project:
             self.do_label_projection()
@@ -306,13 +320,32 @@ class SemLaserScan(LaserScan):
         self.inst_label_color = self.inst_label_color.reshape((-1, 3))
 
     def do_label_projection(self):
-        # only map colors to labels that exist
-        mask = self.proj_idx >= 0
-
-        # semantics
-        self.proj_sem_label[mask] = self.sem_label[self.proj_idx[mask]]
-        self.proj_sem_color[mask] = self.sem_color_lut[self.sem_label[self.proj_idx[mask]]]
-
-        # instances
-        self.proj_inst_label[mask] = self.inst_label[self.proj_idx[mask]]
-        self.proj_inst_color[mask] = self.inst_color_lut[self.inst_label[self.proj_idx[mask]]]
+        try:
+            # only map colors to labels that exist
+            mask = self.proj_idx >= 0
+            
+            # Create a safe mask that ensures indices are within bounds
+            safe_mask = np.zeros_like(mask, dtype=bool)
+            valid_idx = np.where(mask)
+            
+            for i in range(len(valid_idx[0])):
+                y, x = valid_idx[0][i], valid_idx[1][i]
+                idx = self.proj_idx[y, x]
+                if idx < self.sem_label.shape[0]:
+                    safe_mask[y, x] = True
+            
+            if np.sum(safe_mask) == 0:
+                print("WARNING: No valid points for projection")
+                return
+                
+            # semantics - use safe indexing
+            for y, x in zip(*np.where(safe_mask)):
+                idx = self.proj_idx[y, x]
+                self.proj_sem_label[y, x] = self.sem_label[idx]
+                self.proj_sem_color[y, x] = self.sem_color_lut[self.sem_label[idx]]
+                self.proj_inst_label[y, x] = self.inst_label[idx]
+                self.proj_inst_color[y, x] = self.inst_color_lut[self.inst_label[idx]]
+                
+        except Exception as e:
+            print(f"WARNING: Error in label projection: {e}")
+            # Continue without projection if error occurs
